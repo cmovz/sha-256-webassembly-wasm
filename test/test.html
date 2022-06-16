@@ -1,0 +1,84 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8">
+</head>
+<body>
+<script>
+function sha256(u8Data) {
+  const basePtr = 1024;                // where to store in the wasm memory
+  const outPtr = 1024 + u8Data.length; // where to store the digest
+
+  // copy memory from js to wasm
+  HEAPU8.set(u8Data, basePtr);
+
+  // call wasm function
+  SHA256(basePtr, u8Data.length, outPtr);
+
+  // extract the digest
+  return new Uint8Array(HEAPU8.subarray(outPtr, outPtr + 32));
+}
+
+WebAssembly.instantiateStreaming(fetch('sha256.wasm'))
+.then(async (obj) => {
+  const { exports } = obj.instance;
+  window.SHA256 = exports.SHA256;
+  window.memory = exports.memory;
+  window.HEAPU8 = new Uint8Array(memory.buffer);
+
+  let t0 = new Date().getTime();
+  for (let i = 0; i < 110001; i++) {
+    SHA256(1024, 64, 1024 + 64);
+  }
+  console.log('WebAssembly took:' + (new Date().getTime() - t0));
+
+  t0 = new Date().getTime();
+  const data = HEAPU8.subarray(1024, 1024 + 64);
+  for (let i = 0; i < 110001; i++) {
+    sha256(data);
+  }
+  console.log('WebAssembly wrapped in JS took:' + (new Date().getTime() - t0));
+
+  t0 = new Date().getTime();
+  for (let i = 0; i < 110001; i++) {
+    new Uint8Array(crypto.subtle.digest('SHA-256', data));
+  }
+  console.log('Browser implementation took:' + (new Date().getTime() - t0));
+
+  let str = '';
+  for (let i = 0; i < 256; i++) {
+    const encoded = new TextEncoder().encode(str);
+    for (let j = 0; j < 256; j++) {
+      HEAPU8[1024 + j] = 0x00;
+    }
+    HEAPU8.set(encoded, 1024);
+    SHA256(1024, i, 1024 + 256);
+    const correct = new Uint8Array(
+      await crypto.subtle.digest('SHA-256', encoded)
+    );
+    for (let j = 0; j < 32; j++) {
+      if (HEAPU8[1024 + 256 + j] !== correct[j]) {
+        console.log('implementation error size: ' + i);
+        console.log(encoded);
+        console.log(HEAPU8.subarray(1024 + 256, 1024 + 256 + 32));
+        console.log(correct);
+        return;
+      }
+    }
+
+    str += 'a';
+  }
+
+  const m = new TextEncoder().encode('test');
+  const sha256md = sha256(m);
+  const correctMd = new Uint8Array(await crypto.subtle.digest('SHA-256', m));
+  for (let i = 0; i < 32; i++) {
+    if (sha256md[i] !== correctMd[i]) {
+      console.log('sha256() error');
+      return;
+    }
+  }
+});
+</script>
+</body>
+</html>

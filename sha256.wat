@@ -98,7 +98,7 @@
 
     ;; byte 4
     local.get $x
-    i64.const 0xff000000
+    i64.const 0xff00000000
     i64.and
     i64.const 8
     i64.shr_u
@@ -108,7 +108,7 @@
 
     ;; byte 5
     local.get $x
-    i64.const 0xff00000000
+    i64.const 0xff0000000000
     i64.and
     i64.const 24
     i64.shr_u
@@ -118,7 +118,7 @@
 
     ;; byte 6
     local.get $x
-    i64.const 0xff0000000000
+    i64.const 0xff000000000000
     i64.and
     i64.const 40
     i64.shr_u
@@ -128,7 +128,7 @@
 
     ;; byte 7
     local.get $x
-    i64.const 0xff000000000000
+    i64.const 0xff00000000000000
     i64.and
     i64.const 56
     i64.shr_u

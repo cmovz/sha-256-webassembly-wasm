@@ -1,7 +1,7 @@
 # sha-256-webassembly-wasm
 SHA-256 function implemented in WebAssembly. It's faster than using the 
 browser's crypto API. On my machine, calling it 110001 times takes around 160ms
-while the crypto API takes arounds 600ms. It's tiny, only 1418 bytes.
+while the crypto API takes arounds 600ms. It's tiny, only 1422 bytes.
 
 You can compile it with:
 ```
